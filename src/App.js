@@ -19,7 +19,7 @@ function App() {
   const columns = useElementColumns(dataSourceId);
   const data = useElementData(dataSourceId);
   console.log('Columns:', columns);
-  console.log('Data sample:', data?.slice(0, 2));
+  console.log('Data sample:', Array.isArray(data) ? data.slice(0, 2) : data);
 
   // State for forecast settings
   const [forecastSettings, setForecastSettings] = useState({
