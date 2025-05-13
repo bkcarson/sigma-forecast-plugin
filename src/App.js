@@ -9,13 +9,17 @@ import { processTimeSeriesData, generateForecast } from './utils/forecasting';
 function App() {
   // Get configuration from Sigma
   const config = useConfig();
+  console.log('Current config:', config);
   
   // Get data source element ID from config
   const dataSourceId = config?.dataSource;
+  console.log('Data source ID:', dataSourceId);
   
   // Get columns and data from the selected data source
   const columns = useElementColumns(dataSourceId);
   const data = useElementData(dataSourceId);
+  console.log('Columns:', columns);
+  console.log('Data sample:', data?.slice(0, 2));
 
   // State for forecast settings
   const [forecastSettings, setForecastSettings] = useState({
@@ -23,6 +27,7 @@ function App() {
     dateColumn: config?.dateColumn,
     valueColumn: config?.valueColumn
   });
+  console.log('Forecast settings:', forecastSettings);
 
   // State for processed data
   const [processedData, setProcessedData] = useState({
@@ -32,6 +37,13 @@ function App() {
 
   // Update processed data when config or data changes
   useEffect(() => {
+    console.log('Effect triggered with:', {
+      hasData: !!data,
+      hasColumns: !!columns,
+      dateColumn: forecastSettings.dateColumn,
+      valueColumn: forecastSettings.valueColumn
+    });
+
     if (data && columns && forecastSettings.dateColumn && forecastSettings.valueColumn) {
       // Process the time series data
       const { historical } = processTimeSeriesData(
@@ -39,9 +51,11 @@ function App() {
         forecastSettings.dateColumn,
         forecastSettings.valueColumn
       );
+      console.log('Processed historical data:', historical?.slice(0, 2));
 
       // Generate new forecast with updated periods
       const newForecast = generateForecast(historical, forecastSettings.forecastPeriods);
+      console.log('Generated forecast:', newForecast?.slice(0, 2));
 
       setProcessedData({
         historical,
@@ -58,6 +72,10 @@ function App() {
     }));
   };
 
+  // Check config completeness
+  const isConfigComplete =
+    !!dataSourceId && !!config?.dateColumn && !!config?.valueColumn;
+
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 2 }}>
@@ -68,18 +86,37 @@ function App() {
         {/* Configuration Panel */}
         <ForecastConfig />
 
-        {/* Forecast Controls */}
-        <ForecastControls
-          forecastPeriods={forecastSettings.forecastPeriods}
-          onForecastPeriodChange={handleForecastPeriodChange}
-        />
+        {/* Show prompts if config is incomplete */}
+        {!dataSourceId && (
+          <Typography color="text.secondary" sx={{ mt: 2 }}>
+            Please select a data source in the editor panel.
+          </Typography>
+        )}
+        {dataSourceId && !config?.dateColumn && (
+          <Typography color="text.secondary" sx={{ mt: 2 }}>
+            Please select a date column in the editor panel.
+          </Typography>
+        )}
+        {dataSourceId && config?.dateColumn && !config?.valueColumn && (
+          <Typography color="text.secondary" sx={{ mt: 2 }}>
+            Please select a value column in the editor panel.
+          </Typography>
+        )}
 
-        {/* Forecast Chart */}
-        <ForecastChart
-          data={processedData}
-          dateColumn={forecastSettings.dateColumn}
-          valueColumn={forecastSettings.valueColumn}
-        />
+        {/* Only show controls/chart if config is complete */}
+        {isConfigComplete && (
+          <>
+            <ForecastControls
+              forecastPeriods={forecastSettings.forecastPeriods}
+              onForecastPeriodChange={handleForecastPeriodChange}
+            />
+            <ForecastChart
+              data={processedData}
+              dateColumn={forecastSettings.dateColumn}
+              valueColumn={forecastSettings.valueColumn}
+            />
+          </>
+        )}
       </Box>
     </Container>
   );

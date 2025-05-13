@@ -5,6 +5,8 @@ import { Box, Typography } from '@mui/material';
 const ForecastConfig = () => {
   // Configure the editor panel when the component mounts
   useEffect(() => {
+    console.log('Setting up editor panel configuration');
+    
     client.config.configureEditorPanel([
       {
         name: 'dataSource',
@@ -23,21 +25,35 @@ const ForecastConfig = () => {
         source: 'dataSource',
         label: 'Select Value Column'
       }
-    ]);
+    ]).then(() => {
+      console.log('Editor panel configuration completed');
+    }).catch(error => {
+      console.error('Error configuring editor panel:', error);
+    });
 
     // Subscribe to configuration changes
     const unsubscribe = client.config.onConfigChange((newConfig) => {
-      // The parent component will automatically receive updates through useConfig()
-      console.log('Configuration updated:', newConfig);
+      console.log('Configuration updated:', {
+        hasDataSource: !!newConfig?.dataSource,
+        hasDateColumn: !!newConfig?.dateColumn,
+        hasValueColumn: !!newConfig?.valueColumn,
+        fullConfig: newConfig
+      });
     });
 
     return () => {
+      console.log('Cleaning up ForecastConfig subscriptions');
       unsubscribe();
     };
   }, []);
 
   // Get the current configuration
   const config = useConfig();
+  console.log('ForecastConfig current config:', {
+    hasDataSource: !!config?.dataSource,
+    hasDateColumn: !!config?.dateColumn,
+    hasValueColumn: !!config?.valueColumn
+  });
 
   return (
     <Box sx={{ mb: 3 }}>
