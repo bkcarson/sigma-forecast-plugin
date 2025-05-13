@@ -34,7 +34,7 @@ function App() {
   useEffect(() => {
     if (data && columns && forecastSettings.dateColumn && forecastSettings.valueColumn) {
       // Process the time series data
-      const { historical, forecast } = processTimeSeriesData(
+      const { historical } = processTimeSeriesData(
         data,
         forecastSettings.dateColumn,
         forecastSettings.valueColumn
