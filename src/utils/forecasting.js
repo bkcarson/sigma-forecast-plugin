@@ -1,42 +1,30 @@
 // Prophet API utility removed; only client-side ARIMA/Holt-Winters is used
-import ARIMA from 'arima';
+import holtWinters from 'holtwinters';
 
-// Generate forecast using ARIMA (auto) with fallback to Holt-Winters
-export const generateForecast = (historicalData, periods, alpha = 0.3, beta = 0.1) => {
+// Generate forecast using Holt-Winters Exponential Smoothing (additive, no seasonality by default)
+export const generateForecast = (historicalData, periods, alpha = 0.3, beta = 0.1, gamma = 0, seasonLength = null) => {
   if (!historicalData || historicalData.length < 2) {
     return [];
   }
 
-  // Try ARIMA (auto)
+  // If seasonLength is provided and > 1, use seasonal Holt-Winters, else use double exponential smoothing
+  const options = {
+    alpha,
+    beta,
+    gamma,
+    period: seasonLength || 0, // 0 disables seasonality in holtwinters
+    m: periods,
+    pad: true
+  };
+
   try {
-    // arima-js expects a 1D array of numbers
-    const arima = new ARIMA({
-      auto: true,
-      p: 3, d: 1, q: 3,
-      seasonal: true, P: 1, D: 1, Q: 1, s: 7,
-      verbose: false
-    }).train(historicalData);
-    const [pred, errors] = arima.predict(periods);
-    // Ensure non-negative forecasts
-    return pred.map(v => Math.max(0, v));
+    const result = holtWinters(historicalData, options);
+    // result.forecast is an array of forecasted values
+    return result.forecast.map(v => Math.max(0, v));
   } catch (e) {
-    console.warn('ARIMA failed, falling back to Holt-Winters:', e);
-    // Fallback to Holt-Winters Double Exponential Smoothing (no seasonality)
-    // Initialize level and trend
-    let level = historicalData[0];
-    let trend = historicalData[1] - historicalData[0];
-    for (let i = 1; i < historicalData.length; i++) {
-      const value = historicalData[i];
-      const prevLevel = level;
-      level = alpha * value + (1 - alpha) * (level + trend);
-      trend = beta * (level - prevLevel) + (1 - beta) * trend;
-    }
-    const futureForecasts = [];
-    for (let i = 1; i <= periods; i++) {
-      const forecast = level + i * trend;
-      futureForecasts.push(Math.max(0, forecast));
-    }
-    return futureForecasts;
+    console.warn('Holt-Winters failed:', e);
+    // Fallback: repeat last value
+    return Array(periods).fill(historicalData[historicalData.length - 1]);
   }
 };
 
