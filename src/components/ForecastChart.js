@@ -38,7 +38,6 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="date"
-            label={{ value: 'Date', position: 'outsideBottom', offset: 10 }}
             angle={-45}
             textAnchor="end"
             height={60}
@@ -46,7 +45,10 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
           <YAxis
             width={80}
           />
-          <Tooltip />
+          <Tooltip 
+            formatter={(value, name, props) => [value, name === 'actual' ? 'Actual' : name === 'forecast' ? 'Forecast' : name]}
+            labelFormatter={label => `Date Index: ${label}`}
+          />
           <Legend />
           <Line
             type="monotone"
