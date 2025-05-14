@@ -31,7 +31,7 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
           margin={{
             top: 5,
             right: 30,
-            left: 60,
+            left: 80,
             bottom: 40,
           }}
         >
@@ -44,7 +44,7 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
             height={60}
           />
           <YAxis
-            label={{ value: 'Value', angle: -90, position: 'outsideLeft', offset: 10 }}
+            label={{ value: 'Value', angle: -90, position: 'outsideLeft', offset: 30 }}
           />
           <Tooltip />
           <Legend />
