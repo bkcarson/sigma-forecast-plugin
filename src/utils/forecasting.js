@@ -1,25 +1,28 @@
 import { fetchProphetForecast } from './prophetApi';
 
-// Generate forecast using Simple Exponential Smoothing (SES)
-export const generateForecast = (historicalData, periods, alpha = 0.3) => {
+// Generate forecast using Holt-Winters Double Exponential Smoothing (no seasonality)
+export const generateForecast = (historicalData, periods, alpha = 0.3, beta = 0.1) => {
   if (!historicalData || historicalData.length < 2) {
     return [];
   }
 
-  let lastForecast = historicalData[0]; // Initial forecast is the first data point
+  // Initialize level and trend
+  let level = historicalData[0];
+  let trend = historicalData[1] - historicalData[0];
 
-  // Calculate one-step-ahead forecasts for the historical data
-  for (let i = 0; i < historicalData.length; i++) {
-    const currentDataPoint = historicalData[i];
-    lastForecast = alpha * currentDataPoint + (1 - alpha) * lastForecast;
+  // Apply double exponential smoothing to historical data
+  for (let i = 1; i < historicalData.length; i++) {
+    const value = historicalData[i];
+    const prevLevel = level;
+    level = alpha * value + (1 - alpha) * (level + trend);
+    trend = beta * (level - prevLevel) + (1 - beta) * trend;
   }
 
-  // Generate future forecasts
+  // Forecast future periods
   const futureForecasts = [];
-  for (let i = 0; i < periods; i++) {
-    // For future, use last forecast as the 'current' value
-    lastForecast = alpha * lastForecast + (1 - alpha) * lastForecast;
-    futureForecasts.push(Math.max(0, lastForecast));
+  for (let i = 1; i <= periods; i++) {
+    const forecast = level + i * trend;
+    futureForecasts.push(Math.max(0, forecast));
   }
 
   return futureForecasts;
