@@ -1,6 +1,4 @@
-import React, { useEffect } from 'react';
 import { useConfig, client } from '@sigmacomputing/plugin';
-import { Box, Typography } from '@mui/material';
 
 const ForecastConfig = () => {
   // Configure the editor panel when the component mounts
