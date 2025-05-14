@@ -109,7 +109,7 @@ function App() {
             <button
               onClick={() => {
                 const dateArray = (data && config?.dateColumn) ? data[config.dateColumn] : null;
-                const csv = exportForecastDataToCSV(processedData, 'date index', 'actuals', 'forecast', dateArray);
+                const csv = exportForecastDataToCSV(processedData, 'date_index', 'actuals', 'forecast', dateArray);
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
