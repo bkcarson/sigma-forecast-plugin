@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useConfig, useElementData, useElementColumns } from '@sigmacomputing/plugin';
 import { Box, Container, Typography } from '@mui/material';
 import ForecastChart from './components/ForecastChart';
-import ForecastControls from './components/ForecastControls';
 import ForecastConfig from './components/ForecastConfig';
 import { processTimeSeriesData } from './utils/forecasting';
 
@@ -31,9 +30,10 @@ function App() {
   console.log('Columns:', columns);
   console.log('Data sample:', Array.isArray(data) ? data.slice(0, 2) : data);
 
-  // State for forecast settings (only forecastPeriods, dateColumn, valueColumn)
+  const forecastPeriods = parseInt(config?.forecastPeriods, 10) || 5;
+
+  // State for forecast settings (only dateColumn, valueColumn)
   const [forecastSettings, setForecastSettings] = useState({
-    forecastPeriods: 5,
     dateColumn: config?.dateColumn,
     valueColumn: config?.valueColumn
   });
@@ -52,7 +52,7 @@ function App() {
         data,
         forecastSettings.dateColumn,
         forecastSettings.valueColumn,
-        forecastSettings.forecastPeriods,
+        forecastPeriods,
         seasonLength,
         modelType
       );
@@ -60,16 +60,7 @@ function App() {
     } else {
       setProcessedData({ historical: [], forecast: [] });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, columns, forecastSettings, seasonLength, modelType]);
-
-  // Handle forecast period changes
-  const handleForecastPeriodChange = (periods) => {
-    setForecastSettings(prev => ({
-      ...prev,
-      forecastPeriods: periods
-    }));
-  };
+  }, [data, columns, forecastSettings, seasonLength, modelType, forecastPeriods]);
 
   // Check config completeness
   const isConfigComplete =
@@ -102,19 +93,13 @@ function App() {
           </Typography>
         )}
 
-        {/* Only show controls/chart if config is complete */}
+        {/* Only show chart if config is complete */}
         {isConfigComplete && (
-          <>
-            <ForecastControls
-              forecastPeriods={forecastSettings.forecastPeriods}
-              onForecastPeriodChange={handleForecastPeriodChange}
-            />
-            <ForecastChart
-              data={processedData}
-              dateColumn={forecastSettings.dateColumn}
-              valueColumn={forecastSettings.valueColumn}
-            />
-          </>
+          <ForecastChart
+            data={processedData}
+            dateColumn={forecastSettings.dateColumn}
+            valueColumn={forecastSettings.valueColumn}
+          />
         )}
       </Box>
     </Container>
