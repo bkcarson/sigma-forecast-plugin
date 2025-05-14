@@ -37,17 +37,20 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
           margin={{
             top: 5,
             right: 30,
-            left: 20,
-            bottom: 5,
+            left: 60,
+            bottom: 40,
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="date"
-            label={{ value: dateColumn || 'Date', position: 'insideBottom', offset: -5 }}
+            label={{ value: dateColumn || 'Date', position: 'outsideBottom', offset: 10 }}
+            angle={-45}
+            textAnchor="end"
+            height={60}
           />
           <YAxis
-            label={{ value: valueColumn || 'Value', angle: -90, position: 'insideLeft' }}
+            label={{ value: valueColumn || 'Value', angle: -90, position: 'outsideLeft', offset: 10 }}
           />
           <Tooltip />
           <Legend />
