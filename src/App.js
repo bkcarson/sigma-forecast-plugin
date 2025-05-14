@@ -4,7 +4,7 @@ import { Box, Container, Typography } from '@mui/material';
 import ForecastChart from './components/ForecastChart';
 import ForecastControls from './components/ForecastControls';
 import ForecastConfig from './components/ForecastConfig';
-import { processTimeSeriesData, generateForecast, processTimeSeriesDataAsync } from './utils/forecasting';
+import { processTimeSeriesDataAsync } from './utils/forecasting';
 
 function App() {
   // Get configuration from Sigma
