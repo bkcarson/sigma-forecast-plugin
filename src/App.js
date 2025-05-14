@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useRef } from 'react';
 import { useConfig, useElementData, useElementColumns } from '@sigmacomputing/plugin';
 import { Box, Container, Typography, CircularProgress } from '@mui/material';
 import ForecastChart from './components/ForecastChart';
@@ -10,7 +10,18 @@ function App() {
   // Get configuration from Sigma
   const config = useConfig();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processedData, setProcessedData] = useState({ historical: [], forecast: [] });
   
+  // Use refs to maintain stable references to state setters
+  const setIsProcessingRef = useRef(setIsProcessing);
+  const setProcessedDataRef = useRef(setProcessedData);
+  
+  // Update refs when state setters change
+  React.useEffect(() => {
+    setIsProcessingRef.current = setIsProcessing;
+    setProcessedDataRef.current = setProcessedData;
+  }, [setIsProcessing, setProcessedData]);
+
   // Memoize seasonality mapping
   const seasonalityMap = useMemo(() => ({
     'None (1)': 1,
@@ -31,15 +42,12 @@ function App() {
   const columns = useElementColumns(dataSourceId);
   const data = useElementData(dataSourceId);
 
-  // Memoize processed data calculation with loading state
-  const [processedData, setProcessedData] = useState({ historical: [], forecast: [] });
-
-  // Debounced data processing function
-  const debouncedProcessData = useCallback(
-    debounce((newData, newColumns, newConfig, newForecastPeriods, newSeasonLength, newModelType) => {
+  // Create a stable debounced function that doesn't depend on state setters
+  const debouncedProcessData = useMemo(
+    () => debounce((newData, newColumns, newConfig, newForecastPeriods, newSeasonLength, newModelType) => {
       if (!newData || !newColumns || !newConfig?.dateColumn || !newConfig?.valueColumn) {
-        setProcessedData({ historical: [], forecast: [] });
-        setIsProcessing(false);
+        setProcessedDataRef.current({ historical: [], forecast: [] });
+        setIsProcessingRef.current(false);
         return;
       }
 
@@ -51,22 +59,33 @@ function App() {
         newSeasonLength,
         newModelType
       );
-      setProcessedData(result);
-      setIsProcessing(false);
+      setProcessedDataRef.current(result);
+      setIsProcessingRef.current(false);
     }, 300),
-    []
+    [] // Empty dependency array is now truly stable
   );
+
+  // Memoize the data processing trigger to prevent unnecessary effect runs
+  const triggerDataProcessing = useCallback(() => {
+    setIsProcessing(true);
+    debouncedProcessData(data, columns, config, forecastPeriods, seasonLength, modelType);
+  }, [data, columns, config, forecastPeriods, seasonLength, modelType, debouncedProcessData]);
 
   // Update processed data when config or data changes
   React.useEffect(() => {
-    setIsProcessing(true);
-    debouncedProcessData(data, columns, config, forecastPeriods, seasonLength, modelType);
-    
-    // Cleanup debounced function
+    triggerDataProcessing();
     return () => {
       debouncedProcessData.cancel();
     };
-  }, [data, columns, config, forecastPeriods, seasonLength, modelType, debouncedProcessData]);
+  }, [triggerDataProcessing, debouncedProcessData]);
+
+  // Memoize chart props to prevent unnecessary re-renders
+  const chartProps = useMemo(() => ({
+    data: processedData,
+    dateColumn: config?.dateColumn,
+    valueColumn: config?.valueColumn,
+    isLoading: isProcessing
+  }), [processedData, config?.dateColumn, config?.valueColumn, isProcessing]);
 
   // Memoize config completeness check
   const isConfigComplete = useMemo(() => 
@@ -104,12 +123,7 @@ function App() {
         {/* Always render chart if config is complete, show loading state */}
         {isConfigComplete && (
           <Box sx={{ position: 'relative', width: '100%', height: 400 }}>
-            <ForecastChart
-              data={processedData}
-              dateColumn={config.dateColumn}
-              valueColumn={config.valueColumn}
-              isLoading={isProcessing}
-            />
+            <ForecastChart {...chartProps} />
             {isProcessing && (
               <Box
                 sx={{
