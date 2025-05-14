@@ -44,13 +44,13 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             dataKey="date"
-            label={{ value: dateColumn || 'Date', position: 'outsideBottom', offset: 10 }}
+            label={{ value: 'Date', position: 'outsideBottom', offset: 10 }}
             angle={-45}
             textAnchor="end"
             height={60}
           />
           <YAxis
-            label={{ value: valueColumn || 'Value', angle: -90, position: 'outsideLeft', offset: 10 }}
+            label={{ value: 'Value', angle: -90, position: 'outsideLeft', offset: 10 }}
           />
           <Tooltip />
           <Legend />
