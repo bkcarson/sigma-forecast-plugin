@@ -25,7 +25,11 @@ function App() {
   const [forecastSettings, setForecastSettings] = useState({
     forecastPeriods: 5,
     dateColumn: config?.dateColumn,
-    valueColumn: config?.valueColumn
+    valueColumn: config?.valueColumn,
+    alpha: 0.3,
+    beta: 0.1,
+    gamma: 0,
+    seasonLength: 0
   });
   console.log('Forecast settings:', forecastSettings);
 
@@ -42,7 +46,11 @@ function App() {
         data,
         forecastSettings.dateColumn,
         forecastSettings.valueColumn,
-        forecastSettings.forecastPeriods
+        forecastSettings.forecastPeriods,
+        forecastSettings.alpha,
+        forecastSettings.beta,
+        forecastSettings.gamma,
+        forecastSettings.seasonLength
       );
       setProcessedData(result);
     } else {
@@ -57,6 +65,22 @@ function App() {
       ...prev,
       forecastPeriods: periods
     }));
+  };
+
+  const handleAlphaChange = (alpha) => {
+    setForecastSettings(prev => ({ ...prev, alpha }));
+  };
+
+  const handleBetaChange = (beta) => {
+    setForecastSettings(prev => ({ ...prev, beta }));
+  };
+
+  const handleGammaChange = (gamma) => {
+    setForecastSettings(prev => ({ ...prev, gamma }));
+  };
+
+  const handleSeasonLengthChange = (seasonLength) => {
+    setForecastSettings(prev => ({ ...prev, seasonLength }));
   };
 
   // Check config completeness
@@ -95,7 +119,15 @@ function App() {
           <>
             <ForecastControls
               forecastPeriods={forecastSettings.forecastPeriods}
+              alpha={forecastSettings.alpha}
+              beta={forecastSettings.beta}
+              gamma={forecastSettings.gamma}
+              seasonLength={forecastSettings.seasonLength}
               onForecastPeriodChange={handleForecastPeriodChange}
+              onAlphaChange={handleAlphaChange}
+              onBetaChange={handleBetaChange}
+              onGammaChange={handleGammaChange}
+              onSeasonLengthChange={handleSeasonLengthChange}
             />
             <ForecastChart
               data={processedData}

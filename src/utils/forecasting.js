@@ -95,7 +95,7 @@ export const generateForecast = (historicalData, periods, alpha = 0.3, beta = 0.
 };
 
 // Process and validate time series data
-export const processTimeSeriesData = (data, dateColumn, valueColumn, forecastPeriods = 5) => {
+export const processTimeSeriesData = (data, dateColumn, valueColumn, forecastPeriods = 5, alpha = 0.3, beta = 0.1, gamma = 0, seasonLength = 0) => {
   if (!data || !dateColumn || !valueColumn) {
     return {
       historical: [],
@@ -117,6 +117,6 @@ export const processTimeSeriesData = (data, dateColumn, valueColumn, forecastPer
 
   return {
     historical: timeSeriesData,
-    forecast: generateForecast(timeSeriesData, forecastPeriods)
+    forecast: generateForecast(timeSeriesData, forecastPeriods, alpha, beta, gamma, seasonLength, false)
   };
 }; 
