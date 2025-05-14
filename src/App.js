@@ -4,7 +4,7 @@ import { Box, Container, Typography } from '@mui/material';
 import ForecastChart from './components/ForecastChart';
 import ForecastControls from './components/ForecastControls';
 import ForecastConfig from './components/ForecastConfig';
-import { processTimeSeriesDataAsync } from './utils/forecasting';
+import { processTimeSeriesData } from './utils/forecasting';
 
 function App() {
   // Get configuration from Sigma
@@ -29,12 +29,6 @@ function App() {
   });
   console.log('Forecast settings:', forecastSettings);
 
-  // Prophet API endpoint (set to your deployed endpoint)
-  const prophetApiUrl = null; // e.g., 'https://your-prophet-api-endpoint/forecast'
-
-  // Loading state for async forecast
-  const [loading, setLoading] = useState(false);
-
   // State for processed data
   const [processedData, setProcessedData] = useState({
     historical: [],
@@ -43,23 +37,16 @@ function App() {
 
   // Update processed data when config or data changes
   useEffect(() => {
-    const doForecast = async () => {
-      setLoading(true);
-      if (data && columns && forecastSettings.dateColumn && forecastSettings.valueColumn) {
-        const result = await processTimeSeriesDataAsync(
-          data,
-          forecastSettings.dateColumn,
-          forecastSettings.valueColumn,
-          forecastSettings.forecastPeriods,
-          prophetApiUrl
-        );
-        setProcessedData(result);
-      } else {
-        setProcessedData({ historical: [], forecast: [] });
-      }
-      setLoading(false);
-    };
-    doForecast();
+    if (data && columns && forecastSettings.dateColumn && forecastSettings.valueColumn) {
+      const result = processTimeSeriesData(
+        data,
+        forecastSettings.dateColumn,
+        forecastSettings.valueColumn
+      );
+      setProcessedData(result);
+    } else {
+      setProcessedData({ historical: [], forecast: [] });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, columns, forecastSettings]);
 
@@ -109,15 +96,11 @@ function App() {
               forecastPeriods={forecastSettings.forecastPeriods}
               onForecastPeriodChange={handleForecastPeriodChange}
             />
-            {loading ? (
-              <Typography sx={{ mt: 2 }}>Loading forecast...</Typography>
-            ) : (
-              <ForecastChart
-                data={processedData}
-                dateColumn={forecastSettings.dateColumn}
-                valueColumn={forecastSettings.valueColumn}
-              />
-            )}
+            <ForecastChart
+              data={processedData}
+              dateColumn={forecastSettings.dateColumn}
+              valueColumn={forecastSettings.valueColumn}
+            />
           </>
         )}
       </Box>
