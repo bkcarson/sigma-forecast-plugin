@@ -1,5 +1,5 @@
 // Prophet API utility removed; only client-side ARIMA/Holt-Winters is used
-import holtWinters from 'holtwinters';
+import forecast from 'nostradamus';
 
 // Helper: Mean Squared Error
 function meanSquaredError(actual, predicted) {
@@ -40,7 +40,7 @@ function optimizeHoltWintersParams(data, forecastPeriods) {
               m: N,
               pad: true
             };
-            const result = holtWinters(train, options);
+            const result = forecast(train, options);
             const forecast = result.forecast.slice(0, N);
             const error = meanSquaredError(validation, forecast);
             if (error < bestError) {
@@ -58,38 +58,19 @@ function optimizeHoltWintersParams(data, forecastPeriods) {
 }
 
 // Generate forecast using Holt-Winters Exponential Smoothing (additive, no seasonality by default)
-export const generateForecast = (historicalData, periods, alpha = 0.3, beta = 0.1, gamma = 0, seasonLength = null, autoOptimize = true) => {
+export const generateForecast = (historicalData, periods, alpha = 0.3, beta = 0.1, gamma = 0, seasonLength = 0) => {
   if (!historicalData || historicalData.length < 2) {
     return [];
   }
-
-  let params = { alpha, beta, gamma, seasonLength };
-  if (autoOptimize) {
-    const opt = optimizeHoltWintersParams(historicalData, periods);
-    params = {
-      alpha: opt.alpha,
-      beta: opt.beta,
-      gamma: opt.gamma,
-      seasonLength: opt.seasonLength
-    };
-  }
-
-  const options = {
-    alpha: params.alpha,
-    beta: params.beta,
-    gamma: params.gamma,
-    period: params.seasonLength || 0, // 0 disables seasonality in holtwinters
-    m: periods,
-    pad: true
-  };
-
+  // nostradamus requires period > 0 for seasonality, but can be set to 1 for no seasonality
+  const period = seasonLength > 0 ? seasonLength : 1;
   try {
-    const result = holtWinters(historicalData, options);
-    // result.forecast is an array of forecasted values
-    return result.forecast.map(v => Math.max(0, v));
+    // The forecast function returns an array of predictions for m periods
+    const predictions = forecast(historicalData, alpha, beta, gamma, period, periods);
+    // Remove any leading zeros (nostradamus may return zeros for initial values)
+    return predictions.map(v => Math.max(0, v));
   } catch (e) {
-    console.warn('Holt-Winters failed:', e);
-    // Fallback: repeat last value
+    console.warn('Nostradamus Holt-Winters failed:', e);
     return Array(periods).fill(historicalData[historicalData.length - 1]);
   }
 };
@@ -117,6 +98,6 @@ export const processTimeSeriesData = (data, dateColumn, valueColumn, forecastPer
 
   return {
     historical: timeSeriesData,
-    forecast: generateForecast(timeSeriesData, forecastPeriods, alpha, beta, gamma, seasonLength, false)
+    forecast: generateForecast(timeSeriesData, forecastPeriods, alpha, beta, gamma, seasonLength)
   };
 }; 
