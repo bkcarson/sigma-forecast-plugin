@@ -47,12 +47,12 @@ export const processTimeSeriesData = (data, dateColumn, valueColumn, forecastPer
 };
 
 // Utility to convert processed data to CSV
-export function exportForecastDataToCSV({ historical, forecast }, dateColumnName = 'date', valueColumnName = 'actual', forecastColumnName = 'forecast', dateArray = null) {
-  // Build rows: actuals first, then forecasts. Use dateArray (if provided) for date values, otherwise use indices.
+export function exportForecastDataToCSV({ historical, forecast }, dateColumnName = 'date index', valueColumnName = 'actuals', forecastColumnName = 'forecast', dateArray = null) {
+  // Build rows: actuals first, then forecasts. Use dateArray (if provided) for date values, otherwise use index (as a string).
   const rows = [];
   const totalLength = (historical?.length || 0) + (forecast?.length || 0);
   for (let i = 0; i < totalLength; i++) {
-    const date = (dateArray && i < dateArray.length) ? dateArray[i] : i;
+    const date = (dateArray && i < dateArray.length) ? dateArray[i] : i.toString();
     const actual = i < (historical?.length || 0) ? historical[i] : '';
     const forecastVal = (i >= (historical?.length || 0)) ? forecast[i - (historical?.length || 0)] : '';
     rows.push({ [dateColumnName]: date, [valueColumnName]: actual, [forecastColumnName]: forecastVal });
