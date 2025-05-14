@@ -1,15 +1,3 @@
-// Simple moving average calculation
-const calculateMovingAverage = (data, windowSize) => {
-  const result = [];
-  for (let i = 0; i < data.length; i++) {
-    const start = Math.max(0, i - windowSize + 1);
-    const window = data.slice(start, i + 1);
-    const average = window.reduce((sum, val) => sum + val, 0) / window.length;
-    result.push(average);
-  }
-  return result;
-};
-
 // Simple linear regression for forecasting
 const linearRegression = (x, y) => {
   const n = x.length;
