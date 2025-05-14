@@ -19,36 +19,29 @@ const linearRegression = (x, y) => {
   return { slope, intercept };
 };
 
-// Generate forecast using a more robust method
-export const generateForecast = (historicalData, periods) => {
+// Generate forecast using Simple Exponential Smoothing (SES)
+export const generateForecast = (historicalData, periods, alpha = 0.3) => {
   if (!historicalData || historicalData.length < 2) {
     return [];
   }
 
-  const n = historicalData.length;
-  const x = Array.from({ length: n }, (_, i) => i);
+  let lastForecast = historicalData[0]; // Initial forecast is the first data point
 
-  let forecast = [];
-
-  if (n >= 7) {
-    // Use linear regression on all data
-    const { slope, intercept } = linearRegression(x, historicalData);
-    const lastX = x[x.length - 1];
-    for (let i = 1; i <= periods; i++) {
-      const forecastX = lastX + i;
-      const forecastY = slope * forecastX + intercept;
-      forecast.push(Math.max(0, forecastY));
-    }
-  } else {
-    // For short series, use mean of last 3 values
-    const window = historicalData.slice(-3);
-    const mean = window.reduce((sum, val) => sum + val, 0) / window.length;
-    for (let i = 0; i < periods; i++) {
-      forecast.push(Math.max(0, mean));
-    }
+  // Calculate one-step-ahead forecasts for the historical data
+  for (let i = 0; i < historicalData.length; i++) {
+    const currentDataPoint = historicalData[i];
+    lastForecast = alpha * currentDataPoint + (1 - alpha) * lastForecast;
   }
 
-  return forecast;
+  // Generate future forecasts
+  const futureForecasts = [];
+  for (let i = 0; i < periods; i++) {
+    // For future, use last forecast as the 'current' value
+    lastForecast = alpha * lastForecast + (1 - alpha) * lastForecast;
+    futureForecasts.push(Math.max(0, lastForecast));
+  }
+
+  return futureForecasts;
 };
 
 // Process and validate time series data
