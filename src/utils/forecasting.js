@@ -50,10 +50,11 @@ export const processTimeSeriesData = (data, dateColumn, valueColumn, forecastPer
 export function exportForecastDataToCSV({ historical, forecast }, dateColumnName = 'date_index', valueColumnName = 'actuals', forecastColumnName = 'forecast') {
   // Build rows: actuals first, then forecasts, using numeric indices for all rows
   const rows = [];
-  const totalLength = (historical?.length || 0) + (forecast?.length || 0);
+  const reversedForecast = [...(forecast || [])].reverse();
+  const totalLength = (historical?.length || 0) + (reversedForecast?.length || 0);
   for (let i = 0; i < totalLength; i++) {
     const actual = i < (historical?.length || 0) ? historical[i] : '';
-    const forecastVal = (i >= (historical?.length || 0)) ? forecast[i - (historical?.length || 0)] : '';
+    const forecastVal = (i >= (historical?.length || 0)) ? reversedForecast[i - (historical?.length || 0)] : '';
     rows.push({ [dateColumnName]: i, [valueColumnName]: actual, [forecastColumnName]: forecastVal });
   }
   // CSV header
