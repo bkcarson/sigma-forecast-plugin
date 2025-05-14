@@ -12,19 +12,15 @@ import {
 import { Box, Typography } from '@mui/material';
 
 const ForecastChart = ({ data, dateColumn, valueColumn }) => {
-  // Combine historical and forecast data for display
-  const chartData = [
-    ...data.historical.map((value, index) => ({
-      date: index, // This will be replaced with actual dates
-      value,
-      type: 'Historical'
-    })),
-    ...data.forecast.map((value, index) => ({
-      date: data.historical.length + index,
-      value,
-      type: 'Forecast'
-    }))
-  ];
+  // Prepare separate data series for historical and forecast
+  const historicalData = data.historical.map((value, index) => ({
+    date: index,
+    value,
+  }));
+  const forecastData = data.forecast.map((value, index) => ({
+    date: data.historical.length + index,
+    value,
+  }));
 
   return (
     <Box sx={{ width: '100%', height: 400 }}>
@@ -33,7 +29,7 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
       </Typography>
       <ResponsiveContainer>
         <LineChart
-          data={chartData}
+          data={[...historicalData, ...forecastData]}
           margin={{
             top: 5,
             right: 30,
@@ -57,9 +53,20 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
           <Line
             type="monotone"
             dataKey="value"
-            stroke="#8884d8"
-            activeDot={{ r: 8 }}
-            name="Value"
+            data={historicalData}
+            stroke="#1976d2" // Blue for actual
+            dot={{ stroke: '#1976d2', fill: '#1976d2' }}
+            name="Actual"
+            isAnimationActive={false}
+          />
+          <Line
+            type="monotone"
+            dataKey="value"
+            data={forecastData}
+            stroke="#ff9800" // Orange for forecast
+            dot={{ stroke: '#ff9800', fill: '#ff9800' }}
+            name="Forecast"
+            isAnimationActive={false}
           />
         </LineChart>
       </ResponsiveContainer>
