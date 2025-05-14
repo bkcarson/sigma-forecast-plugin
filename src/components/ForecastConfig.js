@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useConfig, client } from '@sigmacomputing/plugin';
 
 const ForecastConfig = () => {
