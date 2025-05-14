@@ -12,12 +12,13 @@ import {
 import { Box, Typography } from '@mui/material';
 
 const ForecastChart = ({ data, dateColumn, valueColumn }) => {
-  // Build unified data array for actual and forecast
-  const totalLength = data.historical.length + data.forecast.length;
+  // Reverse forecast so new points are appended to the right
+  const forecast = [...data.forecast].reverse();
+  const totalLength = data.historical.length + forecast.length;
   const chartData = Array.from({ length: totalLength }, (_, i) => ({
     date: i,
     actual: i < data.historical.length ? data.historical[i] : null,
-    forecast: i >= data.historical.length ? data.forecast[i - data.historical.length] : null,
+    forecast: i >= data.historical.length ? forecast[i - data.historical.length] : null,
   }));
 
   return (
