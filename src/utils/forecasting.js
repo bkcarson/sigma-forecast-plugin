@@ -1,35 +1,27 @@
 // Prophet API utility removed; only client-side ARIMA/Holt-Winters is used
 
-// Holt's Linear Trend (Double Exponential Smoothing) implementation
-function holtLinearForecast(series, forecastPeriods, alpha = 0.8, beta = 0.2) {
-  if (!series || series.length < 2) return [];
-  // Initialization
-  let level = series[0];
-  let trend = series[1] - series[0];
-  let lastLevel, lastTrend;
+import zodiac from 'zodiac-ts';
 
-  // Fit model to data
-  for (let i = 1; i < series.length; i++) {
-    lastLevel = level;
-    lastTrend = trend;
-    level = alpha * series[i] + (1 - alpha) * (lastLevel + lastTrend);
-    trend = beta * (level - lastLevel) + (1 - beta) * lastTrend;
-  }
-
-  // Forecast future periods
-  const forecasts = [];
-  for (let m = 1; m <= forecastPeriods; m++) {
-    forecasts.push(level + m * trend);
-  }
-  return forecasts;
-}
-
-// Generate forecast using Holt's Linear Trend
+// Generate forecast using zodiac-ts Holt-Winters Smoothing (with parameter optimization)
 export const generateForecast = (historicalData, periods) => {
   if (!historicalData || historicalData.length < 2) {
     return [];
   }
-  return holtLinearForecast(historicalData, periods);
+  // Guess a reasonable season length (e.g., 7 for weekly, 12 for monthly, etc.)
+  // For demo, use 7. In production, this could be user-configurable or auto-detected.
+  const seasonLength = 7;
+  const multiplicative = false; // Use additive by default for generality
+  // Initial parameters (can be optimized)
+  let alpha = 0.4, gamma = 0.3, delta = 0.5;
+  // Create model
+  const hws = new zodiac.HoltWintersSmoothing(historicalData, alpha, gamma, delta, seasonLength, multiplicative);
+  // Optimize parameters for best fit
+  const optimized = hws.optimizeParameters(20); // 20 iterations
+  hws.alpha = optimized.alpha;
+  hws.gamma = optimized.gamma;
+  hws.delta = optimized.delta;
+  // Predict future periods
+  return hws.predict(periods).slice(-periods);
 };
 
 // Process and validate time series data
