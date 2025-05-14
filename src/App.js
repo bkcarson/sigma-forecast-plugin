@@ -108,8 +108,7 @@ function App() {
           <Box sx={{ mb: 2 }}>
             <button
               onClick={() => {
-                const dateArray = (data && config?.dateColumn) ? data[config.dateColumn] : null;
-                const csv = exportForecastDataToCSV(processedData, 'date_index', 'actuals', 'forecast', dateArray);
+                const csv = exportForecastDataToCSV(processedData, 'date_index', 'actuals', 'forecast');
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
