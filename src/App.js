@@ -59,12 +59,6 @@ function App() {
   const isConfigComplete =
     !!dataSourceId && !!config?.dateColumn && !!config?.valueColumn;
 
-  const forecastSettings = {
-    dateColumn: config?.dateColumn,
-    valueColumn: config?.valueColumn
-  };
-  console.log('Forecast settings:', forecastSettings);
-
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 2 }}>
@@ -96,8 +90,8 @@ function App() {
         {isConfigComplete && (
           <ForecastChart
             data={processedData}
-            dateColumn={forecastSettings.dateColumn}
-            valueColumn={forecastSettings.valueColumn}
+            dateColumn={config.dateColumn}
+            valueColumn={config.valueColumn}
           />
         )}
       </Box>
