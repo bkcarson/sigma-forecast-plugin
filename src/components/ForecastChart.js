@@ -11,17 +11,20 @@ import {
 } from 'recharts';
 import { Box, Typography } from '@mui/material';
 
-const ForecastChart = React.memo(({ data, dateColumn, valueColumn }) => {
+const ForecastChart = React.memo(({ data, dateColumn, valueColumn, isLoading }) => {
   // Memoize chart data transformation
   const chartData = useMemo(() => {
-    const forecast = [...data.forecast].reverse();
-    const totalLength = data.historical.length + forecast.length;
+    if (!data?.historical?.length && !data?.forecast?.length) {
+      return [];
+    }
+    const forecast = [...(data.forecast || [])].reverse();
+    const totalLength = (data.historical?.length || 0) + (forecast?.length || 0);
     return Array.from({ length: totalLength }, (_, i) => ({
       date: i,
-      actual: i < data.historical.length ? data.historical[i] : null,
-      forecast: i >= data.historical.length ? forecast[i - data.historical.length] : null,
+      actual: i < (data.historical?.length || 0) ? data.historical[i] : null,
+      forecast: i >= (data.historical?.length || 0) ? forecast[i - (data.historical?.length || 0)] : null,
     }));
-  }, [data.historical, data.forecast]);
+  }, [data?.historical, data?.forecast]);
 
   // Memoize tooltip formatter
   const tooltipFormatter = useMemo(() => 
@@ -33,6 +36,17 @@ const ForecastChart = React.memo(({ data, dateColumn, valueColumn }) => {
     label => `Date Index: ${label}`,
     []
   );
+
+  // Early return if no data
+  if (!chartData.length) {
+    return (
+      <Box sx={{ width: '100%', height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Typography color="text.secondary">
+          No data available
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: '100%', height: 400 }}>
@@ -67,20 +81,22 @@ const ForecastChart = React.memo(({ data, dateColumn, valueColumn }) => {
           <Line
             type="monotone"
             dataKey="actual"
-            stroke="#1976d2" // Blue for actual
+            stroke="#1976d2"
             dot={{ stroke: '#1976d2', fill: '#1976d2' }}
             name="Actual"
             isAnimationActive={false}
             connectNulls={false}
+            opacity={isLoading ? 0.5 : 1}
           />
           <Line
             type="monotone"
             dataKey="forecast"
-            stroke="#ff9800" // Orange for forecast
+            stroke="#ff9800"
             dot={{ stroke: '#ff9800', fill: '#ff9800' }}
             name="Forecast"
             isAnimationActive={false}
             connectNulls={false}
+            opacity={isLoading ? 0.5 : 1}
           />
         </LineChart>
       </ResponsiveContainer>

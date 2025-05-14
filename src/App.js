@@ -1,13 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useConfig, useElementData, useElementColumns } from '@sigmacomputing/plugin';
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Container, Typography, CircularProgress } from '@mui/material';
 import ForecastChart from './components/ForecastChart';
 import ForecastConfig from './components/ForecastConfig';
 import { processTimeSeriesData } from './utils/forecasting';
+import debounce from 'lodash/debounce';
 
 function App() {
   // Get configuration from Sigma
   const config = useConfig();
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Memoize seasonality mapping
   const seasonalityMap = useMemo(() => ({
@@ -29,40 +31,48 @@ function App() {
   const columns = useElementColumns(dataSourceId);
   const data = useElementData(dataSourceId);
 
-  // Memoize processed data calculation
-  const processedData = useMemo(() => {
-    if (!data || !columns || !config?.dateColumn || !config?.valueColumn) {
-      return { historical: [], forecast: [] };
-    }
+  // Memoize processed data calculation with loading state
+  const [processedData, setProcessedData] = useState({ historical: [], forecast: [] });
 
-    return processTimeSeriesData(
-      data,
-      config.dateColumn,
-      config.valueColumn,
-      forecastPeriods,
-      seasonLength,
-      modelType
-    );
-  }, [data, columns, config?.dateColumn, config?.valueColumn, forecastPeriods, seasonLength, modelType]);
+  // Debounced data processing function
+  const debouncedProcessData = useCallback(
+    debounce((newData, newColumns, newConfig, newForecastPeriods, newSeasonLength, newModelType) => {
+      if (!newData || !newColumns || !newConfig?.dateColumn || !newConfig?.valueColumn) {
+        setProcessedData({ historical: [], forecast: [] });
+        setIsProcessing(false);
+        return;
+      }
+
+      const result = processTimeSeriesData(
+        newData,
+        newConfig.dateColumn,
+        newConfig.valueColumn,
+        newForecastPeriods,
+        newSeasonLength,
+        newModelType
+      );
+      setProcessedData(result);
+      setIsProcessing(false);
+    }, 300),
+    []
+  );
+
+  // Update processed data when config or data changes
+  React.useEffect(() => {
+    setIsProcessing(true);
+    debouncedProcessData(data, columns, config, forecastPeriods, seasonLength, modelType);
+    
+    // Cleanup debounced function
+    return () => {
+      debouncedProcessData.cancel();
+    };
+  }, [data, columns, config, forecastPeriods, seasonLength, modelType, debouncedProcessData]);
 
   // Memoize config completeness check
   const isConfigComplete = useMemo(() => 
     !!dataSourceId && !!config?.dateColumn && !!config?.valueColumn,
     [dataSourceId, config?.dateColumn, config?.valueColumn]
   );
-
-  // Memoize chart component to prevent unnecessary re-renders
-  const chartComponent = useMemo(() => {
-    if (!isConfigComplete) return null;
-    
-    return (
-      <ForecastChart
-        data={processedData}
-        dateColumn={config.dateColumn}
-        valueColumn={config.valueColumn}
-      />
-    );
-  }, [isConfigComplete, processedData, config?.dateColumn, config?.valueColumn]);
 
   return (
     <Container maxWidth="lg">
@@ -91,8 +101,35 @@ function App() {
           </Typography>
         )}
 
-        {/* Render memoized chart component */}
-        {chartComponent}
+        {/* Always render chart if config is complete, show loading state */}
+        {isConfigComplete && (
+          <Box sx={{ position: 'relative', width: '100%', height: 400 }}>
+            <ForecastChart
+              data={processedData}
+              dateColumn={config.dateColumn}
+              valueColumn={config.valueColumn}
+              isLoading={isProcessing}
+            />
+            {isProcessing && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  zIndex: 1
+                }}
+              >
+                <CircularProgress />
+              </Box>
+            )}
+          </Box>
+        )}
       </Box>
     </Container>
   );
