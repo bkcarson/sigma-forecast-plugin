@@ -1,4 +1,4 @@
-import { fetchProphetForecast } from './prophetApi';
+// Prophet API utility removed; only client-side ARIMA/Holt-Winters is used
 import ARIMA from 'arima';
 
 // Generate forecast using ARIMA (auto) with fallback to Holt-Winters
