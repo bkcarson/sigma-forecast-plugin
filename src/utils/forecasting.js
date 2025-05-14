@@ -1,31 +1,43 @@
 import { fetchProphetForecast } from './prophetApi';
+import ARIMA from 'arima';
 
-// Generate forecast using Holt-Winters Double Exponential Smoothing (no seasonality)
+// Generate forecast using ARIMA (auto) with fallback to Holt-Winters
 export const generateForecast = (historicalData, periods, alpha = 0.3, beta = 0.1) => {
   if (!historicalData || historicalData.length < 2) {
     return [];
   }
 
-  // Initialize level and trend
-  let level = historicalData[0];
-  let trend = historicalData[1] - historicalData[0];
-
-  // Apply double exponential smoothing to historical data
-  for (let i = 1; i < historicalData.length; i++) {
-    const value = historicalData[i];
-    const prevLevel = level;
-    level = alpha * value + (1 - alpha) * (level + trend);
-    trend = beta * (level - prevLevel) + (1 - beta) * trend;
+  // Try ARIMA (auto)
+  try {
+    // arima-js expects a 1D array of numbers
+    const arima = new ARIMA({
+      auto: true,
+      p: 3, d: 1, q: 3,
+      seasonal: true, P: 1, D: 1, Q: 1, s: 7,
+      verbose: false
+    }).train(historicalData);
+    const [pred, errors] = arima.predict(periods);
+    // Ensure non-negative forecasts
+    return pred.map(v => Math.max(0, v));
+  } catch (e) {
+    console.warn('ARIMA failed, falling back to Holt-Winters:', e);
+    // Fallback to Holt-Winters Double Exponential Smoothing (no seasonality)
+    // Initialize level and trend
+    let level = historicalData[0];
+    let trend = historicalData[1] - historicalData[0];
+    for (let i = 1; i < historicalData.length; i++) {
+      const value = historicalData[i];
+      const prevLevel = level;
+      level = alpha * value + (1 - alpha) * (level + trend);
+      trend = beta * (level - prevLevel) + (1 - beta) * trend;
+    }
+    const futureForecasts = [];
+    for (let i = 1; i <= periods; i++) {
+      const forecast = level + i * trend;
+      futureForecasts.push(Math.max(0, forecast));
+    }
+    return futureForecasts;
   }
-
-  // Forecast future periods
-  const futureForecasts = [];
-  for (let i = 1; i <= periods; i++) {
-    const forecast = level + i * trend;
-    futureForecasts.push(Math.max(0, forecast));
-  }
-
-  return futureForecasts;
 };
 
 // Process and validate time series data
