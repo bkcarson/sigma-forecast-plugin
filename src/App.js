@@ -32,13 +32,6 @@ function App() {
 
   const forecastPeriods = parseInt(config?.forecastPeriods, 10) || 5;
 
-  // State for forecast settings (only dateColumn, valueColumn)
-  const [forecastSettings, setForecastSettings] = useState({
-    dateColumn: config?.dateColumn,
-    valueColumn: config?.valueColumn
-  });
-  console.log('Forecast settings:', forecastSettings);
-
   // State for processed data
   const [processedData, setProcessedData] = useState({
     historical: [],
@@ -47,11 +40,11 @@ function App() {
 
   // Update processed data when config or data changes
   useEffect(() => {
-    if (data && columns && forecastSettings.dateColumn && forecastSettings.valueColumn) {
+    if (data && columns && config?.dateColumn && config?.valueColumn) {
       const result = processTimeSeriesData(
         data,
-        forecastSettings.dateColumn,
-        forecastSettings.valueColumn,
+        config.dateColumn,
+        config.valueColumn,
         forecastPeriods,
         seasonLength,
         modelType
@@ -60,11 +53,17 @@ function App() {
     } else {
       setProcessedData({ historical: [], forecast: [] });
     }
-  }, [data, columns, forecastSettings, seasonLength, modelType, forecastPeriods]);
+  }, [data, columns, config, seasonLength, modelType, forecastPeriods]);
 
   // Check config completeness
   const isConfigComplete =
     !!dataSourceId && !!config?.dateColumn && !!config?.valueColumn;
+
+  const forecastSettings = {
+    dateColumn: config?.dateColumn,
+    valueColumn: config?.valueColumn
+  };
+  console.log('Forecast settings:', forecastSettings);
 
   return (
     <Container maxWidth="lg">
