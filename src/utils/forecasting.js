@@ -1,24 +1,3 @@
-// Simple linear regression for forecasting
-const linearRegression = (x, y) => {
-  const n = x.length;
-  let sumX = 0;
-  let sumY = 0;
-  let sumXY = 0;
-  let sumXX = 0;
-
-  for (let i = 0; i < n; i++) {
-    sumX += x[i];
-    sumY += y[i];
-    sumXY += x[i] * y[i];
-    sumXX += x[i] * x[i];
-  }
-
-  const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-  const intercept = (sumY - slope * sumX) / n;
-
-  return { slope, intercept };
-};
-
 // Generate forecast using Simple Exponential Smoothing (SES)
 export const generateForecast = (historicalData, periods, alpha = 0.3) => {
   if (!historicalData || historicalData.length < 2) {
