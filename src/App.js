@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useMemo } from 'react';
 import { useConfig, useElementData, useElementColumns } from '@sigmacomputing/plugin';
 import { Box, Container, Typography } from '@mui/material';
 import ForecastChart from './components/ForecastChart';
@@ -23,7 +23,7 @@ function App() {
     modelType: config?.modelType || 'additive',
     forecastPeriods: parseInt(config?.forecastPeriods, 10) || 5,
     dataSourceId: config?.dataSource
-  }), [config?.seasonality, config?.modelType, config?.forecastPeriods, config?.dataSource]);
+  }), [config?.seasonality, config?.modelType, config?.forecastPeriods, config?.dataSource, seasonalityMap]);
   
   // Get columns and data from the selected data source
   const columns = useElementColumns(dataSourceId);
