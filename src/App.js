@@ -4,7 +4,7 @@ import { Box, Container, Typography } from '@mui/material';
 import ForecastChart from './components/ForecastChart';
 import ForecastControls from './components/ForecastControls';
 import ForecastConfig from './components/ForecastConfig';
-import { processTimeSeriesData, generateForecast } from './utils/forecasting';
+import { processTimeSeriesData, generateForecast, processTimeSeriesDataAsync } from './utils/forecasting';
 
 function App() {
   // Get configuration from Sigma
@@ -29,6 +29,12 @@ function App() {
   });
   console.log('Forecast settings:', forecastSettings);
 
+  // Prophet API endpoint (set to your deployed endpoint)
+  const prophetApiUrl = null; // e.g., 'https://your-prophet-api-endpoint/forecast'
+
+  // Loading state for async forecast
+  const [loading, setLoading] = useState(false);
+
   // State for processed data
   const [processedData, setProcessedData] = useState({
     historical: [],
@@ -37,31 +43,24 @@ function App() {
 
   // Update processed data when config or data changes
   useEffect(() => {
-    console.log('Effect triggered with:', {
-      hasData: !!data,
-      hasColumns: !!columns,
-      dateColumn: forecastSettings.dateColumn,
-      valueColumn: forecastSettings.valueColumn
-    });
-
-    if (data && columns && forecastSettings.dateColumn && forecastSettings.valueColumn) {
-      // Process the time series data
-      const { historical } = processTimeSeriesData(
-        data,
-        forecastSettings.dateColumn,
-        forecastSettings.valueColumn
-      );
-      console.log('Processed historical data:', historical?.slice(0, 2));
-
-      // Generate new forecast with updated periods
-      const newForecast = generateForecast(historical, forecastSettings.forecastPeriods);
-      console.log('Generated forecast:', newForecast?.slice(0, 2));
-
-      setProcessedData({
-        historical,
-        forecast: newForecast
-      });
-    }
+    const doForecast = async () => {
+      setLoading(true);
+      if (data && columns && forecastSettings.dateColumn && forecastSettings.valueColumn) {
+        const result = await processTimeSeriesDataAsync(
+          data,
+          forecastSettings.dateColumn,
+          forecastSettings.valueColumn,
+          forecastSettings.forecastPeriods,
+          prophetApiUrl
+        );
+        setProcessedData(result);
+      } else {
+        setProcessedData({ historical: [], forecast: [] });
+      }
+      setLoading(false);
+    };
+    doForecast();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, columns, forecastSettings]);
 
   // Handle forecast period changes
@@ -110,11 +109,15 @@ function App() {
               forecastPeriods={forecastSettings.forecastPeriods}
               onForecastPeriodChange={handleForecastPeriodChange}
             />
-            <ForecastChart
-              data={processedData}
-              dateColumn={forecastSettings.dateColumn}
-              valueColumn={forecastSettings.valueColumn}
-            />
+            {loading ? (
+              <Typography sx={{ mt: 2 }}>Loading forecast...</Typography>
+            ) : (
+              <ForecastChart
+                data={processedData}
+                dateColumn={forecastSettings.dateColumn}
+                valueColumn={forecastSettings.valueColumn}
+              />
+            )}
           </>
         )}
       </Box>
