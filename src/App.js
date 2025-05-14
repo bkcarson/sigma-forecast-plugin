@@ -3,7 +3,7 @@ import { useConfig, useElementData, useElementColumns } from '@sigmacomputing/pl
 import { Box, Container, Typography, CircularProgress } from '@mui/material';
 import ForecastChart from './components/ForecastChart';
 import ForecastConfig from './components/ForecastConfig';
-import { processTimeSeriesData } from './utils/forecasting';
+import { processTimeSeriesData, exportForecastDataToCSV } from './utils/forecasting';
 import debounce from 'lodash/debounce';
 
 function App() {
@@ -102,6 +102,39 @@ function App() {
         
         {/* Configuration Panel */}
         <ForecastConfig />
+
+        {/* Download Data Button */}
+        {isConfigComplete && (
+          <Box sx={{ mb: 2 }}>
+            <button
+              onClick={() => {
+                const dateArray = (data && config?.dateColumn) ? data[config.dateColumn] : null;
+                const csv = exportForecastDataToCSV(processedData, config?.dateColumn || 'date', config?.valueColumn || 'actual', 'forecast', dateArray);
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'forecast_data.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+              }}
+              style={{
+                padding: '8px 16px',
+                background: '#1976d2',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                fontWeight: 600,
+                marginBottom: 8
+              }}
+            >
+              Download Data (CSV)
+            </button>
+          </Box>
+        )}
 
         {/* Show prompts if config is incomplete */}
         {!dataSourceId && (

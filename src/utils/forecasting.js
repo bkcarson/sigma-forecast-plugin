@@ -44,4 +44,22 @@ export const processTimeSeriesData = (data, dateColumn, valueColumn, forecastPer
     historical: timeSeriesData,
     forecast: generateForecast(timeSeriesData, forecastPeriods, seasonLength, modelType)
   };
-}; 
+};
+
+// Utility to convert processed data to CSV
+export function exportForecastDataToCSV({ historical, forecast }, dateColumnName = 'date', valueColumnName = 'actual', forecastColumnName = 'forecast', dateArray = null) {
+  // Build rows: actuals first, then forecasts. Use dateArray (if provided) for date values, otherwise use indices.
+  const rows = [];
+  const totalLength = (historical?.length || 0) + (forecast?.length || 0);
+  for (let i = 0; i < totalLength; i++) {
+    const date = (dateArray && i < dateArray.length) ? dateArray[i] : i;
+    const actual = i < (historical?.length || 0) ? historical[i] : '';
+    const forecastVal = (i >= (historical?.length || 0)) ? forecast[i - (historical?.length || 0)] : '';
+    rows.push({ [dateColumnName]: date, [valueColumnName]: actual, [forecastColumnName]: forecastVal });
+  }
+  // CSV header
+  const header = [dateColumnName, valueColumnName, forecastColumnName];
+  // CSV rows
+  const csvRows = [header.join(','), ...rows.map(row => header.map(h => row[h]).join(','))];
+  return csvRows.join('\n');
+} 
