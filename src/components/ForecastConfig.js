@@ -43,6 +43,13 @@ const ForecastConfig = () => {
             'Monthly (12)'
           ],
           defaultValue: 'Weekly (7)'
+        },
+        {
+          name: 'forecastPeriods',
+          type: 'dropdown',
+          label: 'Forecast Periods',
+          values: Array.from({ length: 30 }, (_, i) => (i + 1).toString()),
+          defaultValue: '5'
         }
       ]);
       console.log('Editor panel configuration completed');
@@ -60,26 +67,7 @@ const ForecastConfig = () => {
   });
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <Typography variant="subtitle1" gutterBottom>
-        Configuration
-      </Typography>
-      {!config?.dataSource && (
-        <Typography variant="body2" color="text.secondary">
-          Please select a data source in the editor panel
-        </Typography>
-      )}
-      {config?.dataSource && !config?.dateColumn && (
-        <Typography variant="body2" color="text.secondary">
-          Please select a date column in the editor panel
-        </Typography>
-      )}
-      {config?.dataSource && !config?.valueColumn && (
-        <Typography variant="body2" color="text.secondary">
-          Please select a value column in the editor panel
-        </Typography>
-      )}
-    </Box>
+    null
   );
 };
 
