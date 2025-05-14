@@ -41,7 +41,8 @@ function App() {
       const result = processTimeSeriesData(
         data,
         forecastSettings.dateColumn,
-        forecastSettings.valueColumn
+        forecastSettings.valueColumn,
+        forecastSettings.forecastPeriods
       );
       setProcessedData(result);
     } else {

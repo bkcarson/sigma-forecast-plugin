@@ -4,7 +4,7 @@ import { Box, TextField, Typography } from '@mui/material';
 const ForecastControls = ({ forecastPeriods, onForecastPeriodChange }) => {
   const handlePeriodChange = (event) => {
     const value = parseInt(event.target.value, 10);
-    if (!isNaN(value) && value > 0) {
+    if (!isNaN(value) && value >= 1 && value <= 30) {
       onForecastPeriodChange(value);
     }
   };
@@ -15,13 +15,14 @@ const ForecastControls = ({ forecastPeriods, onForecastPeriodChange }) => {
         Forecast Settings
       </Typography>
       <TextField
-        label="Number of Periods to Forecast"
+        label="Number of Periods to Forecast (1-30)"
         type="number"
         value={forecastPeriods}
         onChange={handlePeriodChange}
-        inputProps={{ min: 1 }}
+        inputProps={{ min: 1, max: 30 }}
         size="small"
         sx={{ width: 200 }}
+        helperText="Enter a value from 1 to 30."
       />
     </Box>
   );
