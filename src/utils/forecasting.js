@@ -3,20 +3,18 @@
 import zodiac from 'zodiac-ts';
 
 // Generate forecast using zodiac-ts Holt-Winters Smoothing (with parameter optimization)
-export const generateForecast = (historicalData, periods) => {
+export const generateForecast = (historicalData, periods, seasonLength = 7, modelType = 'additive') => {
   if (!historicalData || historicalData.length < 2) {
     return [];
   }
-  // Guess a reasonable season length (e.g., 7 for weekly, 12 for monthly, etc.)
-  // For demo, use 7. In production, this could be user-configurable or auto-detected.
-  const seasonLength = 7;
-  const multiplicative = false; // Use additive by default for generality
+  // Use provided season length and model type
+  const multiplicative = modelType === 'multiplicative';
   // Initial parameters (can be optimized)
   let alpha = 0.4, gamma = 0.3, delta = 0.5;
   // Create model
   const hws = new zodiac.HoltWintersSmoothing(historicalData, alpha, gamma, delta, seasonLength, multiplicative);
-  // Optimize parameters for best fit
-  const optimized = hws.optimizeParameters(20); // 20 iterations
+  // Optimize parameters for best fit (increase iterations)
+  const optimized = hws.optimizeParameters(100); // 100 iterations
   hws.alpha = optimized.alpha;
   hws.gamma = optimized.gamma;
   hws.delta = optimized.delta;
@@ -25,7 +23,7 @@ export const generateForecast = (historicalData, periods) => {
 };
 
 // Process and validate time series data
-export const processTimeSeriesData = (data, dateColumn, valueColumn, forecastPeriods = 5) => {
+export const processTimeSeriesData = (data, dateColumn, valueColumn, forecastPeriods = 5, seasonLength = 7, modelType = 'additive') => {
   if (!data || !dateColumn || !valueColumn) {
     return {
       historical: [],
@@ -44,6 +42,6 @@ export const processTimeSeriesData = (data, dateColumn, valueColumn, forecastPer
 
   return {
     historical: timeSeriesData,
-    forecast: generateForecast(timeSeriesData, forecastPeriods)
+    forecast: generateForecast(timeSeriesData, forecastPeriods, seasonLength, modelType)
   };
 }; 

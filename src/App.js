@@ -24,6 +24,8 @@ function App() {
   // State for forecast settings
   const [forecastSettings, setForecastSettings] = useState({
     forecastPeriods: 5,
+    seasonLength: 7,
+    modelType: 'additive',
     dateColumn: config?.dateColumn,
     valueColumn: config?.valueColumn
   });
@@ -42,7 +44,9 @@ function App() {
         data,
         forecastSettings.dateColumn,
         forecastSettings.valueColumn,
-        forecastSettings.forecastPeriods
+        forecastSettings.forecastPeriods,
+        forecastSettings.seasonLength,
+        forecastSettings.modelType
       );
       setProcessedData(result);
     } else {
@@ -56,6 +60,20 @@ function App() {
     setForecastSettings(prev => ({
       ...prev,
       forecastPeriods: periods
+    }));
+  };
+
+  const handleSeasonLengthChange = (seasonLength) => {
+    setForecastSettings(prev => ({
+      ...prev,
+      seasonLength
+    }));
+  };
+
+  const handleModelTypeChange = (modelType) => {
+    setForecastSettings(prev => ({
+      ...prev,
+      modelType
     }));
   };
 
@@ -96,6 +114,10 @@ function App() {
             <ForecastControls
               forecastPeriods={forecastSettings.forecastPeriods}
               onForecastPeriodChange={handleForecastPeriodChange}
+              seasonLength={forecastSettings.seasonLength}
+              onSeasonLengthChange={handleSeasonLengthChange}
+              modelType={forecastSettings.modelType}
+              onModelTypeChange={handleModelTypeChange}
             />
             <ForecastChart
               data={processedData}
