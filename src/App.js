@@ -11,6 +11,16 @@ function App() {
   const config = useConfig();
   console.log('Current config:', config);
   
+  // Map seasonality dropdown value to season length
+  const seasonalityMap = {
+    'None (1)': 1,
+    'Daily (7)': 7,
+    'Weekly (7)': 7,
+    'Monthly (12)': 12
+  };
+  const seasonLength = seasonalityMap[config?.seasonality] || 7;
+  const modelType = config?.modelType || 'additive';
+
   // Get data source element ID from config
   const dataSourceId = config?.dataSource;
   console.log('Data source ID:', dataSourceId);
@@ -21,11 +31,9 @@ function App() {
   console.log('Columns:', columns);
   console.log('Data sample:', Array.isArray(data) ? data.slice(0, 2) : data);
 
-  // State for forecast settings
+  // State for forecast settings (only forecastPeriods, dateColumn, valueColumn)
   const [forecastSettings, setForecastSettings] = useState({
     forecastPeriods: 5,
-    seasonLength: 7,
-    modelType: 'additive',
     dateColumn: config?.dateColumn,
     valueColumn: config?.valueColumn
   });
@@ -45,35 +53,21 @@ function App() {
         forecastSettings.dateColumn,
         forecastSettings.valueColumn,
         forecastSettings.forecastPeriods,
-        forecastSettings.seasonLength,
-        forecastSettings.modelType
+        seasonLength,
+        modelType
       );
       setProcessedData(result);
     } else {
       setProcessedData({ historical: [], forecast: [] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, columns, forecastSettings]);
+  }, [data, columns, forecastSettings, seasonLength, modelType]);
 
   // Handle forecast period changes
   const handleForecastPeriodChange = (periods) => {
     setForecastSettings(prev => ({
       ...prev,
       forecastPeriods: periods
-    }));
-  };
-
-  const handleSeasonLengthChange = (seasonLength) => {
-    setForecastSettings(prev => ({
-      ...prev,
-      seasonLength
-    }));
-  };
-
-  const handleModelTypeChange = (modelType) => {
-    setForecastSettings(prev => ({
-      ...prev,
-      modelType
     }));
   };
 
@@ -114,10 +108,6 @@ function App() {
             <ForecastControls
               forecastPeriods={forecastSettings.forecastPeriods}
               onForecastPeriodChange={handleForecastPeriodChange}
-              seasonLength={forecastSettings.seasonLength}
-              onSeasonLengthChange={handleSeasonLengthChange}
-              modelType={forecastSettings.modelType}
-              onModelTypeChange={handleModelTypeChange}
             />
             <ForecastChart
               data={processedData}

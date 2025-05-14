@@ -24,6 +24,25 @@ const ForecastConfig = () => {
           type: 'column',
           source: 'dataSource',
           label: 'Select Value Column'
+        },
+        {
+          name: 'modelType',
+          type: 'dropdown',
+          label: 'Model Type',
+          values: ['additive', 'multiplicative'],
+          defaultValue: 'additive'
+        },
+        {
+          name: 'seasonality',
+          type: 'dropdown',
+          label: 'Seasonality',
+          values: [
+            'None (1)',
+            'Daily (7)',
+            'Weekly (7)',
+            'Monthly (12)'
+          ],
+          defaultValue: 'Weekly (7)'
         }
       ]);
       console.log('Editor panel configuration completed');
