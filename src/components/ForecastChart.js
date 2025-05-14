@@ -44,6 +44,7 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
             height={60}
           />
           <YAxis
+            width={80}
             label={{ value: 'Value', angle: -90, position: 'outsideLeft', offset: 60 }}
           />
           <Tooltip />
