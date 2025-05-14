@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -11,15 +11,28 @@ import {
 } from 'recharts';
 import { Box, Typography } from '@mui/material';
 
-const ForecastChart = ({ data, dateColumn, valueColumn }) => {
-  // Reverse forecast so new points are appended to the right
-  const forecast = [...data.forecast].reverse();
-  const totalLength = data.historical.length + forecast.length;
-  const chartData = Array.from({ length: totalLength }, (_, i) => ({
-    date: i,
-    actual: i < data.historical.length ? data.historical[i] : null,
-    forecast: i >= data.historical.length ? forecast[i - data.historical.length] : null,
-  }));
+const ForecastChart = React.memo(({ data, dateColumn, valueColumn }) => {
+  // Memoize chart data transformation
+  const chartData = useMemo(() => {
+    const forecast = [...data.forecast].reverse();
+    const totalLength = data.historical.length + forecast.length;
+    return Array.from({ length: totalLength }, (_, i) => ({
+      date: i,
+      actual: i < data.historical.length ? data.historical[i] : null,
+      forecast: i >= data.historical.length ? forecast[i - data.historical.length] : null,
+    }));
+  }, [data.historical, data.forecast]);
+
+  // Memoize tooltip formatter
+  const tooltipFormatter = useMemo(() => 
+    (value, name, props) => [value, name === 'actual' ? 'Actual' : name === 'forecast' ? 'Forecast' : name],
+    []
+  );
+
+  const labelFormatter = useMemo(() => 
+    label => `Date Index: ${label}`,
+    []
+  );
 
   return (
     <Box sx={{ width: '100%', height: 400 }}>
@@ -47,8 +60,8 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
             width={80}
           />
           <Tooltip 
-            formatter={(value, name, props) => [value, name === 'actual' ? 'Actual' : name === 'forecast' ? 'Forecast' : name]}
-            labelFormatter={label => `Date Index: ${label}`}
+            formatter={tooltipFormatter}
+            labelFormatter={labelFormatter}
           />
           <Legend />
           <Line
@@ -73,6 +86,8 @@ const ForecastChart = ({ data, dateColumn, valueColumn }) => {
       </ResponsiveContainer>
     </Box>
   );
-};
+});
+
+ForecastChart.displayName = 'ForecastChart';
 
 export default ForecastChart; 

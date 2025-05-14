@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useConfig, useElementData, useElementColumns } from '@sigmacomputing/plugin';
 import { Box, Container, Typography } from '@mui/material';
 import ForecastChart from './components/ForecastChart';
@@ -8,56 +8,61 @@ import { processTimeSeriesData } from './utils/forecasting';
 function App() {
   // Get configuration from Sigma
   const config = useConfig();
-  console.log('Current config:', config);
   
-  // Map seasonality dropdown value to season length
-  const seasonalityMap = {
+  // Memoize seasonality mapping
+  const seasonalityMap = useMemo(() => ({
     'None (1)': 1,
     'Daily (7)': 7,
     'Weekly (7)': 7,
     'Monthly (12)': 12
-  };
-  const seasonLength = seasonalityMap[config?.seasonality] || 7;
-  const modelType = config?.modelType || 'additive';
+  }), []);
 
-  // Get data source element ID from config
-  const dataSourceId = config?.dataSource;
-  console.log('Data source ID:', dataSourceId);
+  // Memoize derived config values
+  const { seasonLength, modelType, forecastPeriods, dataSourceId } = useMemo(() => ({
+    seasonLength: seasonalityMap[config?.seasonality] || 7,
+    modelType: config?.modelType || 'additive',
+    forecastPeriods: parseInt(config?.forecastPeriods, 10) || 5,
+    dataSourceId: config?.dataSource
+  }), [config?.seasonality, config?.modelType, config?.forecastPeriods, config?.dataSource]);
   
   // Get columns and data from the selected data source
   const columns = useElementColumns(dataSourceId);
   const data = useElementData(dataSourceId);
-  console.log('Columns:', columns);
-  console.log('Data sample:', Array.isArray(data) ? data.slice(0, 2) : data);
 
-  const forecastPeriods = parseInt(config?.forecastPeriods, 10) || 5;
-
-  // State for processed data
-  const [processedData, setProcessedData] = useState({
-    historical: [],
-    forecast: []
-  });
-
-  // Update processed data when config or data changes
-  useEffect(() => {
-    if (data && columns && config?.dateColumn && config?.valueColumn) {
-      const result = processTimeSeriesData(
-        data,
-        config.dateColumn,
-        config.valueColumn,
-        forecastPeriods,
-        seasonLength,
-        modelType
-      );
-      setProcessedData(result);
-    } else {
-      setProcessedData({ historical: [], forecast: [] });
+  // Memoize processed data calculation
+  const processedData = useMemo(() => {
+    if (!data || !columns || !config?.dateColumn || !config?.valueColumn) {
+      return { historical: [], forecast: [] };
     }
-  }, [data, columns, config, seasonLength, modelType, forecastPeriods]);
 
-  // Check config completeness
-  const isConfigComplete =
-    !!dataSourceId && !!config?.dateColumn && !!config?.valueColumn;
+    return processTimeSeriesData(
+      data,
+      config.dateColumn,
+      config.valueColumn,
+      forecastPeriods,
+      seasonLength,
+      modelType
+    );
+  }, [data, columns, config?.dateColumn, config?.valueColumn, forecastPeriods, seasonLength, modelType]);
+
+  // Memoize config completeness check
+  const isConfigComplete = useMemo(() => 
+    !!dataSourceId && !!config?.dateColumn && !!config?.valueColumn,
+    [dataSourceId, config?.dateColumn, config?.valueColumn]
+  );
+
+  // Memoize chart component to prevent unnecessary re-renders
+  const chartComponent = useMemo(() => {
+    if (!isConfigComplete) return null;
+    
+    return (
+      <ForecastChart
+        data={processedData}
+        dateColumn={config.dateColumn}
+        valueColumn={config.valueColumn}
+      />
+    );
+  }, [isConfigComplete, processedData, config?.dateColumn, config?.valueColumn]);
 
   return (
     <Container maxWidth="lg">
@@ -86,17 +91,11 @@ function App() {
           </Typography>
         )}
 
-        {/* Only show chart if config is complete */}
-        {isConfigComplete && (
-          <ForecastChart
-            data={processedData}
-            dateColumn={config.dateColumn}
-            valueColumn={config.valueColumn}
-          />
-        )}
+        {/* Render memoized chart component */}
+        {chartComponent}
       </Box>
     </Container>
   );
 }
 
-export default App; 
+export default React.memo(App); 
